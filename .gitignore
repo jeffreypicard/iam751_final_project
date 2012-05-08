@@ -23,4 +23,9 @@ stamp-h1
 *.o
 
 # Executables
-fft_jp
+fft_jp_test
+fftw_test
+
+# Other data files I sometimes use
+*.out
+*.dat

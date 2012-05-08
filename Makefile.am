@@ -2,12 +2,13 @@
 # Makefile.am
 #
 
-bin_PROGRAMS = fft_jp \
+bin_PROGRAMS = fft_jp_test \
 fftw_test
 
 lib_LIBRARIES = libfft_jp.a
 
-libfft_jp_a_SOURCES = fft_jp.h
+libfft_jp_a_SOURCES = fft_jp.c \
+fft_jp.h
 
 LDADD = libfft_jp.a \
 -lfftw
