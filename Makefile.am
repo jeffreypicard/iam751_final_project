@@ -3,6 +3,7 @@
 #
 
 bin_PROGRAMS = fft_jp_test \
+fft_jp_mpi_test \
 fftw_test
 
 lib_LIBRARIES = libfft_jp.a

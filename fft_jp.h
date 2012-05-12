@@ -43,6 +43,7 @@ struct _vector {
 
 /* Function Prototypes */
 void fft( vector *, vector *, int );
+void fft_mpi( vector *, vector *, int );
 void create_vector( vector **, int );
 void destroy_vector( vector * );
 void vec_fill_grid( vector *, val_type );

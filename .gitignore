@@ -24,6 +24,7 @@ stamp-h1
 
 # Executables
 fft_jp_test
+fft_jp_mpi_test
 fftw_test
 
 # Other data files I sometimes use
