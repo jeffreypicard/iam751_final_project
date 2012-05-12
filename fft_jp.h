@@ -42,9 +42,12 @@ struct _vector {
 }
 
 /* Function Prototypes */
-void fft( vector *, vector *, int, complex double );
+void fft( vector *, vector *, int );
 void create_vector( vector **, int );
 void destroy_vector( vector * );
-void fill_grid_vec( vector *, val_type );
+void vec_fill_grid( vector *, val_type );
+void vec_fill_sine( vector *, val_type );
+void vec_fill_cosine( vector *, val_type );
+void write_data( FILE *fp, vector *, vector *, const int , int );
 
 #endif

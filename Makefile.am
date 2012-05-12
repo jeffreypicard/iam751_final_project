@@ -11,7 +11,8 @@ libfft_jp_a_SOURCES = fft_jp.c \
 fft_jp.h
 
 LDADD = libfft_jp.a \
--lfftw
+-lfftw3 \
+-lm
 
 #TESTS = 
 

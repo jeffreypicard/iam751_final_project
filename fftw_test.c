@@ -9,13 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw.h>
+#include <complex.h>
+#include <fftw3.h>
 
 /* My headers */
 #include "fft_jp.h"
 
 /* Constants */
-#define N 1000
+#define N 1024
 #define L 2*M_PI
 #define W_REAL 0
 
@@ -27,23 +28,36 @@ void fftw_write_data( FILE*, fftw_complex *, double *, const int, int );
 
 int main( int argc, char **argv )
 {
-  fftw_complex in[N], out[N];
-  double grid[N];
+  fftw_complex *in, *out;
+  double *grid;
   fftw_plan p;
   FILE *fp = fopen("fftw.dat", "w");
   if( !fp )
     EXIT_WITH_PERROR("file open failed in main: ")
 
+  grid = calloc( sizeof(double), N );
+  in = fftw_malloc( sizeof(fftw_complex) * N );
+  out = fftw_malloc( sizeof(fftw_complex) * N );
+
+  if( !grid || !in || !out )
+    EXIT_WITH_PERROR("malloc failed in main")
+
+
   fill_grid( grid, N, L );
   fftw_complex_fill_cosine( in, N );
 
-  p = fftw_create_plan( N, FFTW_FORWARD, FFTW_ESTIMATE );
+  //p = fftw_create_plan( N, FFTW_FORWARD, FFTW_ESTIMATE );
+  p = fftw_plan_dft_1d( N, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
 
-  fftw_one( p, in, out );
+  //fftw_one( p, in, out );
+  fftw_execute( p );
 
   fftw_write_data( fp, out, grid, N, W_REAL );
 
   fftw_destroy_plan( p );
+  fftw_free( in );
+  fftw_free( out );
+  free( grid );
 
   fclose( fp );
 
@@ -53,7 +67,7 @@ int main( int argc, char **argv )
 /*
  * fftw_write_data
  *
- * Takes a FIEL*, an fftw_complex vector a double* grid vector, 
+ * Takes a FILE*, an fftw_complex vector a double* grid vector, 
  * a size and a mode.
  * mode 0: write real values
  * mode 1: write complex values
@@ -64,7 +78,7 @@ void fftw_write_data( FILE *fp, fftw_complex *v, double *grid,
 {
   int i;
   for( i = 0; i < n; i++ )
-    fprintf( fp, "%g %g\n", grid[i], v[i].re );
+    fprintf( fp, "%g %g\n", grid[i], creal(v[i]) );
 }
 
 /*
@@ -91,8 +105,9 @@ void fftw_complex_fill_sine( fftw_complex *v, const int n )
   int i;
   for( i = 0; i < n; i++ )
   {
-    v[i].re = sin( i * L / n );
-    v[i].im = 0.;
+    /*v[i].re = sin( i * L / n );
+    v[i].im = 0.;*/
+    v[i] = sin( i * L / n );
   }
 }
 
@@ -107,7 +122,8 @@ void fftw_complex_fill_cosine( fftw_complex *v, const int n )
   int i;
   for( i = 0; i < n; i++ )
   {
-    v[i].re = cos( i * L / n );
-    v[i].im = 0.;
+    /*v[i].re = cos( i * L / n );
+    v[i].im = 0.;*/
+    v[i] = cos( i * L / n );
   }
 }
