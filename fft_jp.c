@@ -39,8 +39,6 @@ void fft( vector *in, vector *out, int n )
     create_vector( &q, n/2 );
     for( k = 0; k < n/2; k++ )
     {
-      //x[k] = in[2*k]
-      //y[k] = in[2*k + 1]
       VEC( x, k ) = VEC( in, 2*k );
       VEC( y, k ) = VEC( in, 2*k + 1 );
     }
@@ -48,7 +46,6 @@ void fft( vector *in, vector *out, int n )
     fft( y, q, n/2 );
     for( k = 0; k < n; k++ )
     {
-      //out[k] = p[ k % (n/2) ] + pow(w,k)*q[k % (n/2) ];
       VEC( out, k ) = VEC( p, k % (n/2) ) + cpow(wn,k)*VEC( q, k % (n/2) );
     }
     destroy_vector( x );
@@ -69,6 +66,57 @@ void fft( vector *in, vector *out, int n )
  */
 void fft_mpi( vector *in, vector *out, int n )
 {
+  int rank, size;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  fprintf( stderr, "%d/%d\n", rank, size );
+  int k;
+  if( n == 1 )
+    VEC( out, 0 ) = VEC( in, 0 );
+  else
+  {
+    complex double wn = cexp( -2*M_PI*I / n );
+    vector *x, *y, *p, *q;
+    create_vector( &x, n/2 );
+    create_vector( &y, n/2 );
+    create_vector( &p, n/2 );
+    create_vector( &q, n/2 );
+    for( k = 0; k < n/2; k++ )
+    {
+      //x[k] = in[2*k]
+      //y[k] = in[2*k + 1]
+      VEC( x, k ) = VEC( in, 2*k );
+      VEC( y, k ) = VEC( in, 2*k + 1 );
+    }
+    fft( x, p, n/2 );
+    fft( y, q, n/2 );
+    for( k = 0; k < n; k++ )
+    {
+      //out[k] = p[ k % (n/2) ] + pow(w,k)*q[k % (n/2) ];
+      VEC( out, k ) = VEC( p, k % (n/2) ) + cpow(wn,k)*VEC( q, k % (n/2) );
+    }
+    destroy_vector( x );
+    destroy_vector( y );
+    destroy_vector( p );
+    destroy_vector( q );
+  }
+}
+
+/*
+ * fft_bin
+ *
+ * Takes an input vector, output vector and a number of points
+ * Performs a Fast Fourier Transform on the input vector
+ * and stores it in the output vector.
+ * 
+ * Uses the binary exchange algorithm
+ */
+void fft_bin( vector *in, vector *out, int n )
+{
+  int rank, size;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  fprintf( stderr, "%d/%d\n", rank, size );
   int k;
   if( n == 1 )
     VEC( out, 0 ) = VEC( in, 0 );
@@ -169,6 +217,19 @@ void destroy_vector( vector *v )
   if( !v ) return;
   free( v->vals );
   free( v );
+}
+
+/*
+ * write_vector
+ *
+ * Takes a FILE*, and a vector and writes it 
+ */
+void write_vector( FILE *fp, vector *v )
+{
+  int i;
+  for( i = 0; i < v->n; i++ )
+    fprintf( fp, "%g ", VEC( v, i ) );
+  fprintf( fp, "\n" );
 }
 
 /*
