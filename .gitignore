@@ -26,6 +26,7 @@ stamp-h1
 fft_jp_test
 fft_jp_mpi_test
 fftw_test
+mpi_alltoall_transpose_test
 
 # Other data files I sometimes use
 *.out

@@ -189,6 +189,21 @@ void vec_fill_grid( vector *v, val_type scale )
 }
 
 /*
+ * vec_fill_grid_mpi
+ *
+ * Takes a vector and a scalar and fills the vector
+ * to be an evenly spaced grid from 0 ... scale.
+ * Scaling with the rank from MPI.
+ */
+void vec_fill_grid_mpi( vector *v, val_type scale, int rank, int size )
+{
+  int i;
+  for( i = 0; i < v->n; i++ )
+    VEC( v, i ) = (double)((rank*size)+i) / (double)v->n;
+    //VEC( v, i ) = ((double)i / (double)v->n) * (double)(rank+1);
+}
+
+/*
  * create_vector
  *
  * Takes a pointer to a pointer to a vector and a size.
@@ -227,6 +242,7 @@ void destroy_vector( vector *v )
 void write_vector( FILE *fp, vector *v )
 {
   int i;
+  fprintf( fp, "\n" );
   for( i = 0; i < v->n; i++ )
     fprintf( fp, "%g ", VEC( v, i ) );
   fprintf( fp, "\n" );

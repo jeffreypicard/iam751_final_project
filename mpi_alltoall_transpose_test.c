@@ -1,7 +1,7 @@
 /*
- * fft_jp_mpi_test.c
+ * mpi_alltoall_tranpose_test.c
  *
- * Main test program for my fft_jp code using MPI.
+ * Tests doing a matric transpose with MPI_Alltoall.
  *
  * Author: Jeffrey Picard
  */
@@ -18,6 +18,8 @@
 #define N 16
 #define L 2*M_PI
 #define W_REAL 0
+
+#define TEST_RANK 0
 
 /* 
  * FIXME 
@@ -47,14 +49,14 @@ int main( int argc, char **argv )
 
 
   char fname[100];
-  sprintf(fname, "fft_jp_mpi%d.dat", rank );
+  sprintf(fname, "mpi_alltoall%d.dat", rank );
   FILE *fp = fopen(fname, "w");
   if( !fp )
     EXIT_WITH_PERROR("file open failed in main: ")
 
   int chunk = N/size;
 
-  fprintf( stderr, "%d chunk: %d\n", rank, chunk );
+  //fprintf( stderr, "%d chunk: %d\n", rank, chunk );
 
   //int i_b = (N/size)*rank;
   //int i_e = (N/size)*(rank+1);
@@ -65,7 +67,7 @@ int main( int argc, char **argv )
   int i, j;
   for( i = rank, j = 0; i < N; i += size, j++ )
   {
-    VEC( sub_in, j ) = VEC( in, i );
+    VEC( sub_in, j ) = i;
   }
 
   /* Setup the matrices needed for alltoall communication */
@@ -78,16 +80,19 @@ int main( int argc, char **argv )
   recv_mat[0] = malloc( size*chunk*sizeof(complex double));
   for( i = 1; i < size; i++ )
     recv_mat[i] = recv_mat[i-1]+chunk;
-
-  write_vector( stderr, sub_in );
+  
+  if( rank == TEST_RANK )
+    write_vector( stderr, sub_in );
   //write_vector( stderr, sub_out );
   /* phase 1, sqrt(N) fft */
-  fft_mpi( sub_in, sub_out, chunk );
+  //fft_mpi( sub_in, sub_out, chunk );
 
   /* Fills all the matrices so all other processes get this same info */
   for( i = 0; i < size; i++ )
     for( j = 0; j < chunk; j++)
-      send_mat[i][j] = sub_out->vals[j];
+    {
+      send_mat[i][j] = sub_in->vals[j];
+    }
 
   /* phase 2, transpose */
   vector *sub_in2;
@@ -101,9 +106,19 @@ int main( int argc, char **argv )
    * Again this assumes there are sqrt(n) proccess running */
   for( i = 0; i < chunk; i++ )
     sub_in2->vals[i] = recv_mat[i][rank];
-  write_vector( stderr, sub_in2 );
+  if( rank == TEST_RANK )
+  {
+    write_vector( stderr, sub_in2 );
+
+    for( i = 0; i < size; i++ )
+    {
+      for( j = 0; j < chunk; j++ )
+        fprintf( stderr, "%g\t", recv_mat[i][j] );
+      fprintf( stderr, "\n");
+    }
+  }
   /* phase 3, sqrt(N) fft */
-  fft_mpi( sub_in2, sub_out2, chunk );
+  //fft_mpi( sub_in2, sub_out2, chunk );
 
   write_data( fp, sub_out2, grid, N/size, W_REAL );
 
