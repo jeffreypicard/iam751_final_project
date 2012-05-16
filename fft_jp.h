@@ -43,14 +43,21 @@ struct _vector {
 
 /* Function Prototypes */
 void fft( vector *, vector *, int );
-void fft_mpi( vector *, vector *, int );
+void fft_mpi( complex double *, complex double *, int );
 void create_vector( vector **, int );
 void destroy_vector( vector * );
 void vec_fill_grid( vector *, val_type );
 void vec_fill_grid_mpi( vector *, val_type, int, int );
+void arr_fill_grid_mpi( complex double *, const int, complex double, 
+                        const int, const int );
 void vec_fill_sine( vector *, val_type );
+void arr_fill_sine( complex double *, const int, complex double );
 void vec_fill_cosine( vector *, const int, val_type );
+void arr_fill_cosine( complex double *, const int, complex double );
 void write_data( FILE *, vector *, vector *, const int , int );
+void write_data_arr( FILE *, complex double *, complex double *, 
+                     const int, const int );
 void write_vector( FILE *, vector * );
+void write_arr( FILE *, complex double *, const int );
 
 #endif
