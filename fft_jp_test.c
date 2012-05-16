@@ -14,7 +14,8 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 4
+#define N 64
+#define M 32
 #define L 2*M_PI
 #define W_REAL 0
 
@@ -30,7 +31,7 @@ int main( int argc, char **argv )
   create_vector( &grid, N );
 
   vec_fill_grid( grid, L );
-  vec_fill_cosine( in, L );
+  vec_fill_cosine( in, M, L );
 
   fft( in, out, N );
 

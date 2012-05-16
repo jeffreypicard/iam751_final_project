@@ -49,7 +49,7 @@ void destroy_vector( vector * );
 void vec_fill_grid( vector *, val_type );
 void vec_fill_grid_mpi( vector *, val_type, int, int );
 void vec_fill_sine( vector *, val_type );
-void vec_fill_cosine( vector *, val_type );
+void vec_fill_cosine( vector *, const int, val_type );
 void write_data( FILE *, vector *, vector *, const int , int );
 void write_vector( FILE *, vector * );
 

@@ -45,7 +45,7 @@ int main( int argc, char **argv )
   MPI_Comm_size( MPI_COMM_WORLD, &size );
 
   vec_fill_grid_mpi( grid, L, rank, size );
-  vec_fill_cosine( in, L );
+  vec_fill_cosine( in, N, L );
 
 
   char fname[100];

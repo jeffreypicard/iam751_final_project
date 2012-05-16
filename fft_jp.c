@@ -168,11 +168,11 @@ void vec_fill_sine( vector *v, val_type scale )
  * Takes a vector and a scalar and fills the vector
  * with cosine values.
  */
-void vec_fill_cosine( vector *v, val_type scale )
+void vec_fill_cosine( vector *v, const int n, val_type scale )
 {
   int i;
-  for( i = 0; i < v->n; i++ )
-    VEC( v, i ) = cos( i * scale / v->n );
+  for( i = 0; i < n; i++ )
+    VEC( v, i ) = cos( i * scale / n );
 }
 
 /*

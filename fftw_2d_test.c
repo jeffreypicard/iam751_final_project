@@ -1,7 +1,8 @@
 /*
- * fftw_test.c
+ * fftw_2d_test.c
  *
- * Testing code using the fftw library.
+ * Testing code using the fftw library for the
+ * 2d fft.
  *
  * Author: Jeffrey Picard (jpicardnh@gmail.com)
  */
@@ -16,14 +17,15 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 128
-#define M 32
+#define N 4
+#define M 16
 #define L 2*M_PI
 #define W_REAL 0
 
 /* Function Prototypes */
 void fftw_complex_fill_sine( fftw_complex *, const int );
 void fftw_complex_fill_cosine( fftw_complex *, const int );
+void fftw_complex_fill_cosine_2d( fftw_complex *, const int, const int);
 void fill_grid( double *, const int, double );
 void fftw_write_data( FILE*, fftw_complex *, double *, const int, int );
 
@@ -32,31 +34,33 @@ int main( int argc, char **argv )
   fftw_complex *in, *out;
   double *grid;
   fftw_plan p;
-  FILE *fp = fopen("fftw.dat", "w");
+  FILE *fp = fopen("fftw_2d.dat", "w");
   if( !fp )
     EXIT_WITH_PERROR("file open failed in main: ")
 
-  grid = calloc( sizeof(double), N );
-  in = fftw_malloc( sizeof(fftw_complex) * N );
-  out = fftw_malloc( sizeof(fftw_complex) * N );
+  grid = calloc( sizeof(double), M );
+  in = fftw_malloc( sizeof(fftw_complex) * M );
+  out = fftw_malloc( sizeof(fftw_complex) * M );
 
   if( !grid || !in || !out )
     EXIT_WITH_PERROR("malloc failed in main")
 
 
-  fill_grid( grid, N, L );
-  fftw_complex_fill_cosine( in, M );
-  int i;
+  fill_grid( grid, M, L );
+  //fftw_complex_fill_cosine( in, M );
+  fftw_complex_fill_cosine_2d( in, N, N );
+  /*int i;
   for( i = M; i < N; i++ )
-    in[i] = 0;
+    in[i] = 0;*/
 
   //p = fftw_create_plan( N, FFTW_FORWARD, FFTW_ESTIMATE );
-  p = fftw_plan_dft_1d( N, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
+  //p = fftw_plan_dft_1d( N, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
+  p = fftw_plan_dft_2d( N, N, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
 
   //fftw_one( p, in, out );
   fftw_execute( p );
 
-  fftw_write_data( fp, out, grid, N, W_REAL );
+  fftw_write_data( fp, out, grid, M, W_REAL );
 
   fftw_destroy_plan( p );
   fftw_free( in );
@@ -130,5 +134,21 @@ void fftw_complex_fill_cosine( fftw_complex *v, const int n )
     v[i].im = 0.;*/
     v[i] = cos( i * L / n );
     /*v[i] = cos( i * L / 10 );*/
+  }
+}
+
+/*
+ * fftw_complex_fill_cosine_2d
+ *
+ * Takes an fftw_complex vector and the size of the vector
+ * and fills it with cosine values in two dimensions.
+ */
+void fftw_complex_fill_cosine_2d( fftw_complex *v, const int n, const int m )
+{
+  int i, j;
+  for( i = 0; i < n; i++ )
+  {
+    for( j = 0; j < m; j++ )
+      v[(i*m) + j] = cos( j * L / m );
   }
 }

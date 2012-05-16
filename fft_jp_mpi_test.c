@@ -15,7 +15,8 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 16
+#define N 4
+#define M N*N
 #define L 2*M_PI
 #define W_REAL 0
 
@@ -35,7 +36,7 @@ int main( int argc, char **argv )
 
   create_vector( &in, N );
   create_vector( &out, N );
-  create_vector( &grid, N );
+  create_vector( &grid, M );
 
 
   int rank, size;
@@ -43,7 +44,7 @@ int main( int argc, char **argv )
   MPI_Comm_size( MPI_COMM_WORLD, &size );
 
   vec_fill_grid_mpi( grid, L, rank, size );
-  vec_fill_cosine( in, L );
+  vec_fill_cosine( in, N, L );
 
 
   char fname[100];
@@ -52,7 +53,7 @@ int main( int argc, char **argv )
   if( !fp )
     EXIT_WITH_PERROR("file open failed in main: ")
 
-  int chunk = N/size;
+  int chunk = N;
 
   fprintf( stderr, "%d chunk: %d\n", rank, chunk );
 
@@ -63,10 +64,13 @@ int main( int argc, char **argv )
   create_vector( &sub_in, chunk );
   create_vector( &sub_out, chunk );
   int i, j;
+  /*
   for( i = rank, j = 0; i < N; i += size, j++ )
   {
     VEC( sub_in, j ) = VEC( in, i );
-  }
+  }*/
+  for( i = 0; i < N; i++ )
+    VEC( sub_in, i ) = VEC( in, i );
 
   /* Setup the matrices needed for alltoall communication */
   complex double **send_mat = malloc( size*sizeof(complex double*));
@@ -105,7 +109,20 @@ int main( int argc, char **argv )
   /* phase 3, sqrt(N) fft */
   fft_mpi( sub_in2, sub_out2, chunk );
 
-  write_data( fp, sub_out2, grid, N/size, W_REAL );
+  /* phase 4, another transpose */
+  /* Fills all the matrices so all other processes get this same info */
+  for( i = 0; i < size; i++ )
+    for( j = 0; j < chunk; j++)
+      send_mat[i][j] = sub_out2->vals[j];
+  vector *result;
+  create_vector( &result, chunk );
+  MPI_Alltoall( send_mat[0], chunk, MPI_DOUBLE_COMPLEX, 
+                recv_mat[0], chunk, MPI_DOUBLE_COMPLEX,
+                MPI_COMM_WORLD );
+  for( i = 0; i < chunk; i++ )
+    result->vals[i] = recv_mat[i][rank];
+
+  write_data( fp, result, grid, N, W_REAL );
 
   free( in );
   free( out );
