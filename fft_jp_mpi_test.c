@@ -15,10 +15,12 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 4
+#define N 16
 #define M N*N
 #define L 2*M_PI
 #define W_REAL 0
+
+#define DEBUG 1
 
 /* 
  * FIXME 
@@ -53,9 +55,10 @@ int main( int argc, char **argv )
   /* Make sure number of points is a power of 2 */
   assert( N % 2 == 0 );
 
+  /*
   in = calloc( N, sizeof(complex double) );
   out = calloc( N, sizeof(complex double) );
-  grid = calloc( N, sizeof(complex double) );
+  grid = calloc( N, sizeof(complex double) );*/
   /*create_vector( &in, N );
   create_vector( &out, N );
   create_vector( &grid, M );*/
@@ -66,7 +69,11 @@ int main( int argc, char **argv )
   /* Make sure number of processes is a power of 2 */
   assert( size % 2 == 0 );
 
-  num_columns = M / size;
+  num_columns = N / size;
+
+#if DEBUG
+  fprintf( stderr, "num_columns: %d\n", num_columns );
+#endif
 
   in2 = malloc( num_columns*sizeof(complex double*) );
   out2 = malloc( num_columns*sizeof(complex double*) );
@@ -84,8 +91,8 @@ int main( int argc, char **argv )
   }
   arr_fill_grid_mpi( grid2, chunk*num_columns, L, rank, size );
 
-  arr_fill_grid_mpi( grid, N, L, rank, size );
-  arr_fill_cosine( in, N, L );
+  //arr_fill_grid_mpi( grid, N, L, rank, size );
+  //arr_fill_cosine( in, N, L );
 
 
 
@@ -120,12 +127,20 @@ int main( int argc, char **argv )
   for( i = 1; i < size; i++ )
     recv_mat[i] = recv_mat[i-1]+(chunk*num_columns);
 
+#if DEBUG
+  fprintf( stderr, "initialized matrices\n");
+#endif
+
   //write_arr( stderr, sub_in, N );
   //write_vector( stderr, sub_out );
   /* phase 1, sqrt(N) fft */
   //fft_mpi( sub_in, sub_out, chunk );
   for( i = 0; i < num_columns; i++ )
     fft_mpi( in2[i], out2[i], chunk );
+
+#if DEBUG
+  fprintf( stderr, "finished first round of 1d fft's\n");
+#endif
 
   /* Fills all the matrices so all other processes get this same info */
   //int e_j = chunk*num_columns;
@@ -135,34 +150,83 @@ int main( int argc, char **argv )
       for( k = 0; k < chunk; k++ )
         send_mat[i][(j*chunk)+k] = out2[j][k];
 
+#if DEBUG
+  fprintf( stderr, "filled send_mat with data\n");
+#endif
+
   /* phase 2, transpose */
   //sub_in2 = calloc( chunk, sizeof(complex double) );
   //sub_out2 = calloc( chunk, sizeof(complex double) );
   /*create_vector( &sub_in2, chunk );
   create_vector( &sub_out2, chunk );*/
-  MPI_Alltoall( send_mat[0], chunk, MPI_DOUBLE_COMPLEX, 
-                recv_mat[0], chunk, MPI_DOUBLE_COMPLEX,
+  MPI_Alltoall( send_mat[0], chunk*num_columns, MPI_DOUBLE_COMPLEX, 
+                recv_mat[0], chunk*num_columns, MPI_DOUBLE_COMPLEX,
                 MPI_COMM_WORLD );
+
+#if DEBUG
+  fprintf( stderr, "finished MPI_Alltoall\n");
+#endif
+
   /* We want our rank's column for each row for a matrix tranpose. 
    * Again this assumes there are sqrt(n) proccess running */
   /*
   for( i = 0; i < chunk; i++ )
     sub_in2[i] = recv_mat[i][rank];
   write_arr( stderr, sub_in2, N );*/
-  for( i = 0; i < size; i++ )
+      //for( k = 0; k < chunk; k++ )
+
+  /* 
+   * FIXME There has to be a cleaner way to do this.
+   * Until then here's an explanation.
+   * We need to fill each column our process is responsible for. Hence
+   * the outer loop.
+   * We need to get infomation from every other process. Hence the middle
+   * loop.
+   * Each other process has num_columns and therefore we need num_columns 
+   * elements from it. Hence the inner loop.
+   * num_columns = chunk / size.
+   * Therefore we may index through an entire column with 
+   * n contained in [0...chunk] = [0...size*num_columns].
+   * Hence the (i*num_columns)+k
+   * Since each column in the recv_mat matrix has num_columns elements of
+   * data we want, and this data is seperated by chunk number of elements 
+   * and since we want the row in each other column which is equal to our 
+   * column in the overall matrix, we want an index of (rank*num_columns)+j
+   * into each column, therefore we index into the recv_mat matrix with 
+   * (k*chunk)+(rank*num_columns)+j
+   */
+  for( j = 0; j < num_columns; j++ )
+    for( i = 0; i < size; i++ )
+      for( k = 0; k < num_columns; k++ )
+        in2[j][(i*num_columns)+k] = recv_mat[i][(k*chunk)+(rank*num_columns)+j];
+/*  for( i = 0; i < size; i++ )
     for( j = 0; j < num_columns; j++ );
       for( k = 0; k < chunk; k++ )
-        in2[(i*size)+j][k] = recv_mat[i][(j*chunk)+k];
+        in2[(i*size)+j][k] = recv_mat[i][(j*chunk)+k];*/
+
+#if DEBUG
+  fprintf( stderr, "reloaded in data from recv_mat\n");
+#endif
+
   /* phase 3, sqrt(N) fft */
   for( i = 0; i < num_columns; i++ )
     fft_mpi( in2[i], out2[i], chunk );
 
+#if DEBUG
+  fprintf( stderr, "finished second round of 1d fft's\n");
+#endif
+
+
   /* phase 4, another transpose */
-  /* Fills all the matrices so all other processes get this same info */
+  /* Fills the matrix so all other processes get this same info */
   for( i = 0; i < size; i++ )
     for( j = 0; j < num_columns; j++)
       for( k = 0; k < chunk; k++ )
         send_mat[i][(j*chunk)+k] = out2[j][k];
+#if DEBUG
+  fprintf( stderr, "filled send_mat with data second time\n");
+#endif
+
   /*
   for( i = 0; i < size; i++ )
     for( j = 0; j < chunk; j++)
@@ -170,17 +234,32 @@ int main( int argc, char **argv )
 
   //result = calloc( chunk, sizeof(complex double) );
   /*create_vector( &result, chunk );*/
-  MPI_Alltoall( send_mat[0], chunk, MPI_DOUBLE_COMPLEX, 
-                recv_mat[0], chunk, MPI_DOUBLE_COMPLEX,
+  MPI_Alltoall( send_mat[0], chunk*num_columns, MPI_DOUBLE_COMPLEX, 
+                recv_mat[0], chunk*num_columns, MPI_DOUBLE_COMPLEX,
                 MPI_COMM_WORLD );
+
+#if DEBUG
+  fprintf( stderr, "finished MPI_Alltoall second time\n");
+#endif
+
   /*
   for( i = 0; i < chunk; i++ )
     result[i] = recv_mat[i][rank];*/
 
-  for( i = 0; i < size; i++ )
-    for( j = 0; j < num_columns; j++ );
+  for( j = 0; j < num_columns; j++ )
+    for( i = 0; i < size; i++ )
+      for( k = 0; k < num_columns; k++ )
+        in2[j][(i*num_columns)+k] = recv_mat[i][(k*chunk)+(rank*num_columns)+j];
+
+  /*for( j = 0; j < num_columns; j++ )
+    for( i = 0; i < size; i++ )
       for( k = 0; k < chunk; k++ )
-        in2[(i*size)+j][k] = recv_mat[i][(j*chunk)+k];
+        in2[j][(i*num_columns)+k] = recv_mat[i][(k*chunk)+rank];*/
+        //in2[j][k] = recv_mat[i][(j*chunk)+rank];
+
+#if DEBUG
+  fprintf( stderr, "reloaded in data from recv_mat second time\n");
+#endif
 
   for( i = 0; i < num_columns; i++ )
   {
@@ -190,7 +269,12 @@ int main( int argc, char **argv )
       EXIT_WITH_PERROR("file open failed in main: ")
 
     write_data_arr( fp, in2[i], grid2, chunk, W_REAL );
+    fclose( fp );
   }
+
+#if DEBUG
+  fprintf( stderr, "finished writing to files.\n");
+#endif
 
   /*
   free( in );
@@ -200,13 +284,13 @@ int main( int argc, char **argv )
   free( sub_in2 );
   free( sub_out2 );
   free( result );
-  free( grid );*/
+  free( grid );
   free( in2 );
   free( out2 );
   free( send_mat );
   free( recv_mat );
 
-  fclose( fp );
+  fclose( fp );*/
 
   MPI_Finalize();
   return 0;
