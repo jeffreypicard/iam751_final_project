@@ -8,7 +8,7 @@
 \usepackage{theorem}
 \usepackage{amsmath}
 \usepackage{graphicx}
-%\usepackage{citesort}
+\usepackage{citesort}
 \usepackage{float}
 \usepackage{color}
 \usepackage{array}
@@ -51,7 +51,7 @@ to use MPI by parallelizing the 2d FFT.
 
 % main text
 \section{Building and Using the Code}
-The code for the project is packaged into a gzipped tarball (.tar.gz) with the use of 'make dist'. Into order to build and run the code the first step
+The code for the project is packaged into a gzipped tarball (.tar.gz) with the use of 'make dist'. In order to build and run the code the first step
 is to unpack it with 'tar xfzv' then 'cd' into the directory and run 'autoconf -i', followed by 'configure' and then 'make' to actually build the code.
 Once this is done there will be multiple executables, many used for testing the various functions that were written in the course of completing this 
 project. 
@@ -111,7 +111,8 @@ be a power of 2 and the number of processes must be a multiple of 2.
 
 \section{Implementation}
 The 1d FFT was implemented in a straight forward recursive method following
-the pseudo code from [ref]. There are ways of implementing this iteratively
+the pseudo code from lecture note slide 13 from \cite{Heath2011}. There are 
+ways of implementing this iteratively
 that are more efficient. i.e. using the binary reversal seen in FFTs, and
 would probably have been more competitive with the fftw implementation.
 However this method seemed much cleaner and served the purposes of this
@@ -159,5 +160,8 @@ Further extensions of this work would be to remove the inflexibility of the
 2d fft so that the full $N$x$M$ matrix may be specified as input data
 and so that $N$ need not equal $M$. Also improved methods of performing
 the 1d fft, such as with bit reversals, would be worth looking into.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{fft}
 
 \end{document}

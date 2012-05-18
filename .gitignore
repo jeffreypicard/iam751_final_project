@@ -28,6 +28,8 @@ stamp-h1
 *.log
 *.pdf
 *.bak
+*.bbl
+*.blg
 
 # Executables
 fft_jp_test
