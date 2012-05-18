@@ -17,7 +17,7 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 1024
+#define N 4096
 #define M N*N
 #define L 2*M_PI
 

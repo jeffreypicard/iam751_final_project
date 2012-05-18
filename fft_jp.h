@@ -76,4 +76,14 @@ void write_arr( FILE *, complex double *, const int );
 void fft_2d( const int, complex double *);
 void fft_2d_ret( const int, complex double *, complex double *);
 
+#include <sys/time.h>
+
+static inline double
+WTime( void )
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec + tv.tv_usec / 1e6;
+}
+
 #endif

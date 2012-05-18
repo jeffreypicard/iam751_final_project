@@ -22,10 +22,18 @@ stamp-h1
 # Object files
 *.o
 
+#latex generated files
+*.aux
+*.dvi
+*.log
+*.pdf
+
 # Executables
 fft_jp_test
+fft_jp_timing
 fft_jp_mpi_test
 fftw_test
+fftw_timing
 fftw_2d_test
 fft_jp_2d_test
 mpi_alltoall_transpose_test

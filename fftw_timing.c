@@ -1,7 +1,7 @@
 /*
- * fftw_test.c
+ * fftw_timing.c
  *
- * Testing code using the fftw library.
+ * Timing code using the fftw library.
  *
  * Author: Jeffrey Picard (jpicardnh@gmail.com)
  */
@@ -20,6 +20,7 @@
 #define M N
 #define L 2*M_PI
 #define W_REAL 0
+#define MAX_TESTS 100
 
 /* Function Prototypes */
 void fftw_complex_fill_sine( fftw_complex *, const int );
@@ -30,38 +31,60 @@ void fftw_write_data( FILE*, fftw_complex *, double *, const int, int );
 int main( int argc, char **argv )
 {
   fftw_complex *in, *out;
-  double *grid;
   fftw_plan p;
-  FILE *fp = fopen("fftw.dat", "w");
+  int num_tests = 0;
+  int n = 2;
+  /* Just in case, might be nice to have these */
+  int points_arr[MAX_TESTS];
+  double time_data[MAX_TESTS];
+  double t_b, t_e;
+  int i;
+  if( argc == 2 )
+  {
+    num_tests = atoi( argv[1] );
+    if( num_tests > MAX_TESTS )
+      EXIT_WITH_ERROR("Error: max number of tests is %d\n", MAX_TESTS );
+  }
+  else
+    EXIT_WITH_ERROR("Usage: fftw_test <num_pows_of_two>\n");
+
+  FILE *fp = fopen("fftw_timing.dat", "w");
   if( !fp )
     EXIT_WITH_PERROR("file open failed in main: ")
 
-  grid = calloc( sizeof(double), N );
-  in = fftw_malloc( sizeof(fftw_complex) * N );
-  out = fftw_malloc( sizeof(fftw_complex) * N );
+  for( i = 0; i < num_tests; i++ )
+  {
+    t_b = WTime();
+    in = fftw_malloc( sizeof(fftw_complex) * n );
+    out = fftw_malloc( sizeof(fftw_complex) * n );
 
-  if( !in || !out )
-    EXIT_WITH_PERROR("malloc failed in main")
+    if( !in || !out )
+      EXIT_WITH_PERROR("malloc failed in main")
 
 
-  fill_grid( grid, N, L );
-  fftw_complex_fill_cosine( in, M );
-  int i;
-  for( i = M; i < N; i++ )
-    in[i] = 0;
+    fftw_complex_fill_cosine( in, n );
 
-  //p = fftw_create_plan( N, FFTW_FORWARD, FFTW_ESTIMATE );
-  p = fftw_plan_dft_1d( N, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
+    //p = fftw_create_plan( N, FFTW_FORWARD, FFTW_ESTIMATE );
+    p = fftw_plan_dft_1d( n, in, out, FFTW_FORWARD, FFTW_ESTIMATE );
 
-  //fftw_one( p, in, out );
-  fftw_execute( p );
+    /*fftw_one( p, in, out );*/
+    fftw_execute( p );
 
-  fftw_write_data( fp, out, grid, N, W_REAL );
+    fftw_destroy_plan( p );
+    fftw_free( in );
+    fftw_free( out );
 
-  fftw_destroy_plan( p );
-  fftw_free( in );
-  fftw_free( out );
-  free( grid );
+    t_e = WTime();
+
+    points_arr[i] = n;
+    time_data[i] = t_e - t_b;
+
+    /*fftw_write_data( fp, out, grid, N, W_REAL );*/
+    fprintf( fp, "%d %g\n", n, t_e - t_b );
+    fprintf( stderr, "%d n = %d\n", i, n );
+
+    n *= 2;
+  }
 
   fclose( fp );
 
