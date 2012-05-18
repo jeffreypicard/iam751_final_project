@@ -1,7 +1,7 @@
 /*
  * mpi_alltoall_tranpose_test.c
  *
- * Tests doing a matric transpose with MPI_Alltoall.
+ * Tests doing a matrix transpose with MPI_Alltoall.
  *
  * Author: Jeffrey Picard
  */
@@ -17,7 +17,6 @@
 /* Constants */
 #define N 16
 #define L 2*M_PI
-#define W_REAL 0
 
 #define TEST_RANK 0
 
@@ -27,6 +26,12 @@
  * This is just trying to get MPI_Alltoall working with the fft
  * algorithm and get the parallel version actually getting a correct
  * answer. This currently assumes there are sqrt(N) processes running
+ *
+ * TODO
+ * Get this working as a seperate example of how to do transposes
+ * across processes and not have to rely on the the sqrt(N) hack.
+ * It's working on the regular code, just need to rip out all
+ * fft bits of that and move it into here at some point.
  *
  * FIXME
  */
@@ -113,7 +118,7 @@ int main( int argc, char **argv )
     for( i = 0; i < size; i++ )
     {
       for( j = 0; j < chunk; j++ )
-        fprintf( stderr, "%g\t", recv_mat[i][j] );
+        fprintf( stderr, "%g\t", (double)recv_mat[i][j] );
       fprintf( stderr, "\n");
     }
   }

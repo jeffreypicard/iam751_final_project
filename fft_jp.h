@@ -14,6 +14,11 @@
 
 /* Vector struct and macro */
 
+/* 
+ * Originally these vector structs and macros
+ * were used but I scrapped them when trying
+ * to get the 2d fft working.
+ */
 typedef complex double val_type;
 
 struct _vector {
@@ -48,16 +53,27 @@ void create_vector( vector **, int );
 void destroy_vector( vector * );
 void vec_fill_grid( vector *, val_type );
 void vec_fill_grid_mpi( vector *, val_type, int, int );
-void arr_fill_grid_mpi( complex double *, const int, complex double, 
-                        const int, const int );
+void arr_fill_grid_mpi( complex double *, const int, 
+                        const int, const int, const int );
 void vec_fill_sine( vector *, val_type );
 void arr_fill_sine( complex double *, const int, complex double );
 void vec_fill_cosine( vector *, const int, val_type );
 void arr_fill_cosine( complex double *, const int, complex double );
+
+/* 
+ * These constant go with the write_data functions and change 
+ * their behavior when passed in as the last argument.
+ */
+#define W_REAL 0
+#define W_COMP 1
+#define W_BOTH 2
 void write_data( FILE *, vector *, vector *, const int , int );
 void write_data_arr( FILE *, complex double *, complex double *, 
                      const int, const int );
 void write_vector( FILE *, vector * );
 void write_arr( FILE *, complex double *, const int );
+
+void fft_2d( const int, complex double *);
+void fft_2d_ret( const int, complex double *, complex double *);
 
 #endif

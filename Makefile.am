@@ -6,6 +6,7 @@ bin_PROGRAMS = fft_jp_test \
 fft_jp_mpi_test \
 fftw_test \
 fftw_2d_test \
+fft_jp_2d_test \
 mpi_alltoall_transpose_test
 
 lib_LIBRARIES = libfft_jp.a

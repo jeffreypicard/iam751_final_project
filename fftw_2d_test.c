@@ -17,8 +17,8 @@
 #include "fft_jp.h"
 
 /* Constants */
-#define N 4
-#define M 16
+#define N 1024
+#define M N*N
 #define L 2*M_PI
 #define W_REAL 0
 
@@ -141,7 +141,8 @@ void fftw_complex_fill_cosine( fftw_complex *v, const int n )
  * fftw_complex_fill_cosine_2d
  *
  * Takes an fftw_complex vector and the size of the vector
- * and fills it with cosine values in two dimensions.
+ * and fills it with cosine values in two dimensions using 
+ * row major order.
  */
 void fftw_complex_fill_cosine_2d( fftw_complex *v, const int n, const int m )
 {

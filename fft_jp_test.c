@@ -17,7 +17,6 @@
 #define N 64
 #define M 32
 #define L 2*M_PI
-#define W_REAL 0
 
 int main( int argc, char **argv )
 {
@@ -42,7 +41,6 @@ int main( int argc, char **argv )
   free( grid );
 
   fclose( fp );
-
 
   return 0;
 }
